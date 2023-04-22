@@ -3,13 +3,6 @@ import { z } from 'zod'
 import { knex } from '../database'
 import { randomUUID } from 'node:crypto'
 
-interface MealsCountResult {
-  mealsCount: number
-  mealsOnDietCount: number
-  mealsOffDietCount: number
-  bestSequenceDays: number
-}
-
 export async function usersRoutes(app: FastifyInstance) {
   app.get('/', async (request, reply) => {
     const users = await knex('users').select('*')
@@ -36,9 +29,9 @@ export async function usersRoutes(app: FastifyInstance) {
     const AllMeals = await knex('meals')
       .select('*')
       .where('user_id', id)
-      .orderBy('dateTime')
+      .orderBy('dateTime', 'asc')
 
-    let bestSequenceDays = 2
+    let bestSequenceDays = 0
     let countSequenceDays = 0
 
     const numberOfMeals = AllMeals.length
@@ -87,6 +80,10 @@ export async function usersRoutes(app: FastifyInstance) {
       mealsOffDiet,
       bestSequenceDays,
     }
+
+    await knex('users')
+      .where('id', id)
+      .update('sequence_days', bestSequenceDays)
 
     return { metrics }
   })
